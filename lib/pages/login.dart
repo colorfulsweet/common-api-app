@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:blog_api/common/global.dart';
+import 'package:blog_api/models/index.dart';
+import 'package:blog_api/common/profile_change_notifier.dart';
 
 class Login extends StatefulWidget {
   Login({Key key, this.title}) : super(key: key);
@@ -25,7 +30,7 @@ class _LoginState extends State<Login> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          autovalidate: true,
+          autovalidate: false,
           child: Column(
             children: <Widget>[
             TextFormField(
@@ -83,6 +88,10 @@ class _LoginState extends State<Login> {
     // 提交前，先验证各个表单字段是否合法
     if ((_formKey.currentState as FormState).validate()) {
       print('用户名:${_usernameController.text} 密码:${_pwdController.text}');
+
+      Global.profile.token = '123';
+      Provider.of<UserModel>(context).user = User.fromJson({'username': _usernameController.text});
+
       Navigator.pushNamed(context, 'home');
     }
   }
