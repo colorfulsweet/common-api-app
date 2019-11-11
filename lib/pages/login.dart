@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
+import 'package:toast/toast.dart';
 
 import 'package:blog_api/common/global.dart';
 import 'package:blog_api/models/index.dart';
-import 'package:blog_api/common/common_notifier.dart';
+import 'package:blog_api/common/profile_notifier.dart';
 
 class Login extends StatefulWidget {
   Login({Key key, this.title}) : super(key: key);
@@ -14,15 +16,19 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   /// 表单的唯一标识
-  GlobalKey _formKey = new GlobalKey<FormState>();
+  final GlobalKey _formKey = GlobalKey<FormState>();
+  /// Scaffold组件的唯一标识
+  final GlobalKey _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _usernameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
   /// 是否显示密码明文
   bool pwdShow = false;
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
       ),
@@ -84,13 +90,20 @@ class _LoginState extends State<Login> {
       ),
     );
   }
-  void _onLogin () {
+  void _onLogin() async{
     // 提交前，先验证各个表单字段是否合法
     if ((_formKey.currentState as FormState).validate()) {
-      print('用户名:${_usernameController.text} 密码:${_pwdController.text}');
+      Response response = await Dio().post("https://www.colorfulsweet.site/api/common/login",
+          data: {'username': _usernameController.text, 'password': _pwdController.text});
 
-      Global.profile.token = '123';
-      Provider.of<CommonNotifier>(context).user = User.fromJson({'username': _usernameController.text});
+      if(response.data['statusCode'] == 401) {
+        Toast.show(response.data['msg'], context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+        return;
+      }
+      // 保存token
+      Global.profile.token = response.data['token'];
+      // 组件间共享用户信息
+      Provider.of<ProfileNotifier>(context).user = User.fromJson(response.data['userInfo']);
 
       Navigator.pushNamed(context, 'home');
     }

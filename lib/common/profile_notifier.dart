@@ -5,7 +5,7 @@ import 'package:blog_api/models/index.dart';
 
 
 /// 用户状态在登录状态发生变化时更新、通知其依赖项
-class CommonNotifier extends ChangeNotifier {
+class ProfileNotifier extends ChangeNotifier {
   Profile get _profile => Global.profile;
 
   @override
