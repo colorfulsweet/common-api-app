@@ -34,12 +34,6 @@ class Global {
         print(e);
       }
     }
-
-    // 如果没有缓存策略，设置默认缓存策略
-    profile.cache = profile.cache ?? CacheConfig()
-      ..enable = true
-      ..maxAge = 3600
-      ..maxCount = 100;
   }
 
   // 持久化Profile信息

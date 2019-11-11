@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:blog_api/common/global.dart';
 import 'package:blog_api/models/index.dart';
-import 'package:blog_api/common/profile_change_notifier.dart';
+import 'package:blog_api/common/common_notifier.dart';
 
 class Login extends StatefulWidget {
   Login({Key key, this.title}) : super(key: key);
@@ -90,7 +90,7 @@ class _LoginState extends State<Login> {
       print('用户名:${_usernameController.text} 密码:${_pwdController.text}');
 
       Global.profile.token = '123';
-      Provider.of<UserModel>(context).user = User.fromJson({'username': _usernameController.text});
+      Provider.of<CommonNotifier>(context).user = User.fromJson({'username': _usernameController.text});
 
       Navigator.pushNamed(context, 'home');
     }
