@@ -1,4 +1,3 @@
-import 'package:blog_api/models/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,8 +19,8 @@ class BlogApi extends StatelessWidget {
           primarySwatch: Colors.pink,
         ),
         routes: {
-          'login' : (context) => Login(title: '登录'),
-          'home' : (context) => Home(title: '首页')
+          'login' : (context) => Login(title: '博客API管理后台'),
+          'home' : (context) => Home(title: '首页'),
         },
         initialRoute: 'login',
       ),

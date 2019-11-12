@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
-import 'package:toast/toast.dart';
 
 import 'package:blog_api/common/global.dart';
 import 'package:blog_api/models/index.dart';
 import 'package:blog_api/common/profile_notifier.dart';
+import 'package:blog_api/components/full_button.dart';
 
 class Login extends StatefulWidget {
   Login({Key key, this.title}) : super(key: key);
@@ -18,7 +18,7 @@ class _LoginState extends State<Login> {
   /// 表单的唯一标识
   final GlobalKey _formKey = GlobalKey<FormState>();
   /// Scaffold组件的唯一标识
-  final GlobalKey _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController _usernameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
   /// 是否显示密码明文
@@ -72,18 +72,7 @@ class _LoginState extends State<Login> {
                 return v.trim().isNotEmpty ? null : '必须输入密码';
               },
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 25),
-              child: ConstrainedBox(
-                constraints: BoxConstraints.expand(height: 50.0),
-                child: RaisedButton(
-                  color: Theme.of(context).primaryColor,
-                  onPressed: _onLogin,
-                  textColor: Colors.white,
-                  child: Text('登录'),
-                ),
-              ),
-            ),
+            FullButton(text:'登录', onPressed: this._onLogin,)
             ],
           ),
         ),
@@ -93,11 +82,11 @@ class _LoginState extends State<Login> {
   void _onLogin() async{
     // 提交前，先验证各个表单字段是否合法
     if ((_formKey.currentState as FormState).validate()) {
-      Response response = await Dio().post("https://www.colorfulsweet.site/api/common/login",
+      Response response = await Dio().post( '${Global.API_BASE_PATH}common/login',
           data: {'username': _usernameController.text, 'password': _pwdController.text});
 
       if(response.data['statusCode'] == 401) {
-        Toast.show(response.data['msg'], context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+        _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(response.data['msg'])));
         return;
       }
       // 保存token
