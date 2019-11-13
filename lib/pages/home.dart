@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:blog_api/common/profile_notifier.dart';
 import 'package:blog_api/components/full_button.dart';
 
+/// 首页
 class Home extends StatefulWidget {
   Home({Key key, this.title}) : super(key: key);
   final String title;
@@ -14,7 +15,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<Map<String, dynamic>> menus = [
-    {'icon': Icons.photo_library, 'text': '照片墙'},
+    {'icon': Icons.photo_library, 'text': '照片墙', 'routeName': 'photoWall'},
     {'icon': Icons.query_builder, 'text': '其他'},
     {'icon': Icons.query_builder, 'text': '其他'},
     {'icon': Icons.query_builder, 'text': '其他'},
@@ -39,11 +40,9 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      body:
-
-      Container(
+      body: Container(
         padding: EdgeInsets.all(10),
-        child: Column(
+        child: ListView(
           children: <Widget>[
           GridView.builder(
             shrinkWrap: true,
@@ -53,14 +52,20 @@ class _HomeState extends State<Home> {
                 crossAxisSpacing: 10 // 横轴间距
             ),
             itemBuilder: (context, index){
-              return Container(
-                color: Colors.black12,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(this.menus[index]['icon'], size: 50),
-                    Text(this.menus[index]['text'], style: TextStyle(fontSize: 20),) //query_builder
-                  ],
+              return AnimatedContainer(
+                duration: Duration(seconds: 5),
+                child:Ink(
+                  color: Theme.of(context).cardColor,
+                  child:InkWell(
+                    onTap: () => Navigator.pushNamed(context, this.menus[index]['routeName']),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(this.menus[index]['icon'], size: 50),
+                        Text(this.menus[index]['text'], style: TextStyle(fontSize: 20),) //query_builder
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
