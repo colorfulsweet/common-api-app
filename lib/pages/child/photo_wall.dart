@@ -17,8 +17,13 @@ class PhotoWall extends StatefulWidget {
 
 class _PhotoWallState extends State<PhotoWall> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final List<double> heights = [50,80,30,60,55,90];
+  // 滚动控制器
+  ScrollController _scrollController = ScrollController();
   List<String> imgUrls = [];
+  int _start = 0;
+  int _limit = 20;
+  bool _isLoading = false; // 是否正在加载
+
 
   @override
   Widget build(BuildContext context) {
@@ -35,37 +40,69 @@ class _PhotoWallState extends State<PhotoWall> {
         ),
         ],
       ),
-      body:  StaggeredGridView.countBuilder(
-//        controller: _scrollController,
-        itemCount: this.imgUrls.length,
-        primary: false,
-        crossAxisCount: 4,
-        mainAxisSpacing: 4.0,
-        crossAxisSpacing: 4.0,
-        padding: EdgeInsets.all(10),
-        itemBuilder: (context, index) => Container(
-          child: Image.network(
-            this.imgUrls[index], // 图片地址
-            fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是按高度适应
+      body: RefreshIndicator(
+        onRefresh: _refreshImagesData,
+        child: StaggeredGridView.countBuilder(
+          controller: _scrollController,
+          itemCount: this.imgUrls.length,
+          primary: false,
+          crossAxisCount: 4,
+          mainAxisSpacing: 4.0,
+          crossAxisSpacing: 4.0,
+          padding: EdgeInsets.all(10),
+          itemBuilder: (context, index) => Container(
+            child: Image.network(
+              this.imgUrls[index], // 图片地址
+              fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
+            ),
           ),
+          staggeredTileBuilder: (index) => StaggeredTile.fit(2),
         ),
-        staggeredTileBuilder: (index) => StaggeredTile.fit(2),
       ),
     );
   }
   @override
   void initState() {
-    this._loadImagesData();
     super.initState();
+    this._refreshImagesData();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        this._moreImagesData();
+      }
+    });
+  }
+  /// 下拉时刷新数据
+  Future<void> _refreshImagesData () async {
+    return this._loadImagesData(false, (List<String> thumbnails){
+      this.imgUrls = thumbnails;
+    });
+  }
+  /// 滑动到底部时加载更多数据
+  Future<void> _moreImagesData() {
+    return this._loadImagesData(true, (List<String> thumbnails){
+      this.imgUrls.addAll(thumbnails);
+    });
   }
 
-  void _loadImagesData () async {
-    Response response = await Dio().get('${Global.API_BASE_PATH}common/photos?start=0&limit=20');
-    print(response.data['data']);
-//    var thumbnailUrls = response.data['data'].map((item) {
-//      return 'https://cdn.colorfulsweet.site/' + item['thumbnail'];
-//    });
-//    print(thumbnailUrls);
-//    imgUrls.addAll(thumbnailUrls);
+  Future<void> _loadImagesData(bool isAdd, Function callback) async {
+    if(this._isLoading) return null;
+    if(isAdd) {
+      this._start += this._limit;
+    } else {
+      this._start = 0;
+    }
+    this._isLoading = true;
+    return Dio().get('${Global.API_BASE_PATH}common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
+        .then((Response response) {
+      this._isLoading = false;
+      List<String> thumbnails = [];
+      response.data['data'].forEach((item) {
+        thumbnails.add('https://cdn.colorfulsweet.site/' + item['thumbnail']);
+      });
+      // 动态改变数据需要调用setState
+      setState((){
+        callback(thumbnails);
+      });
+    });
   }
 }
