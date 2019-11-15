@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'package:blog_api/common/profile_notifier.dart';
 import 'package:blog_api/common/global.dart';
@@ -17,13 +18,13 @@ class PhotoWall extends StatefulWidget {
 
 class _PhotoWallState extends State<PhotoWall> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final Dio _http = Dio();
   // 滚动控制器
   ScrollController _scrollController = ScrollController();
   List<String> imgUrls = [];
   int _start = 0;
   int _limit = 20;
   bool _isLoading = false; // 是否正在加载
-
 
   @override
   Widget build(BuildContext context) {
@@ -40,23 +41,26 @@ class _PhotoWallState extends State<PhotoWall> {
         ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshImagesData,
-        child: StaggeredGridView.countBuilder(
-          controller: _scrollController,
-          itemCount: this.imgUrls.length,
-          primary: false,
-          crossAxisCount: 4,
-          mainAxisSpacing: 4.0,
-          crossAxisSpacing: 4.0,
-          padding: EdgeInsets.all(10),
-          itemBuilder: (context, index) => Container(
-            child: Image.network(
-              this.imgUrls[index], // 图片地址
-              fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
+      body: ModalProgressHUD(
+        inAsyncCall: this._isLoading,
+        child: RefreshIndicator(
+          onRefresh: _refreshImagesData,
+          child: StaggeredGridView.countBuilder(
+            controller: _scrollController,
+            itemCount: this.imgUrls.length,
+            primary: false,
+            crossAxisCount: 4,
+            mainAxisSpacing: 4.0,
+            crossAxisSpacing: 4.0,
+            padding: EdgeInsets.all(10),
+            itemBuilder: (context, index) => Container(
+              child: Image.network(
+                this.imgUrls[index], // 图片地址
+                fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
+              ),
             ),
+            staggeredTileBuilder: (index) => StaggeredTile.fit(2),
           ),
-          staggeredTileBuilder: (index) => StaggeredTile.fit(2),
         ),
       ),
     );
@@ -91,16 +95,18 @@ class _PhotoWallState extends State<PhotoWall> {
     } else {
       this._start = 0;
     }
-    this._isLoading = true;
-    return Dio().get('${Global.API_BASE_PATH}common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
+    setState(() {
+      this._isLoading = true;
+    });
+    return _http.get('${Global.API_BASE_PATH}common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
         .then((Response response) {
-      this._isLoading = false;
       List<String> thumbnails = [];
       response.data['data'].forEach((item) {
         thumbnails.add('https://cdn.colorfulsweet.site/' + item['thumbnail']);
       });
       // 动态改变数据需要调用setState
       setState((){
+        this._isLoading = false;
         callback(thumbnails);
       });
     });

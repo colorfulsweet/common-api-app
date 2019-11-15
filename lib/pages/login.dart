@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'package:blog_api/common/global.dart';
 import 'package:blog_api/models/index.dart';
@@ -23,8 +24,9 @@ class _LoginState extends State<Login> {
   TextEditingController _usernameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
   /// 是否显示密码明文
-  bool pwdShow = false;
-
+  bool _pwdShow = false;
+  /// 是否正在加载
+  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,48 +35,51 @@ class _LoginState extends State<Login> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          autovalidate: false,
-          child: Column(
-            children: <Widget>[
-            TextFormField(
-              autofocus: true,
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: '用户名',
-                hintText: '请输入用户名/邮箱',
-                prefixIcon: Icon(Icons.person),
+      body: ModalProgressHUD(
+        inAsyncCall: _loading,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            autovalidate: false,
+            child: Column(
+              children: <Widget>[
+              TextFormField(
+                autofocus: true,
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: '用户名',
+                  hintText: '请输入用户名/邮箱',
+                  prefixIcon: Icon(Icons.person),
+                ),
+                // 校验用户名（不能为空）
+                validator: (v) {
+                  return v.trim().isNotEmpty ? null : '必须输入用户名';
+              }),
+              TextFormField(
+                controller: _pwdController,
+                autofocus: false,
+                decoration: InputDecoration(
+                  labelText: '密码',
+                  hintText: '请输入密码',
+                  prefixIcon: Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(this._pwdShow ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        this._pwdShow = !this._pwdShow;
+                      });
+                    },
+                  )),
+                obscureText: !this._pwdShow,
+                //校验密码（不能为空）
+                validator: (v) {
+                  return v.trim().isNotEmpty ? null : '必须输入密码';
+                },
               ),
-              // 校验用户名（不能为空）
-              validator: (v) {
-                return v.trim().isNotEmpty ? null : '必须输入用户名';
-            }),
-            TextFormField(
-              controller: _pwdController,
-              autofocus: false,
-              decoration: InputDecoration(
-                labelText: '密码',
-                hintText: '请输入密码',
-                prefixIcon: Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(this.pwdShow ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () {
-                    setState(() {
-                      this.pwdShow = !this.pwdShow;
-                    });
-                  },
-                )),
-              obscureText: !this.pwdShow,
-              //校验密码（不能为空）
-              validator: (v) {
-                return v.trim().isNotEmpty ? null : '必须输入密码';
-              },
+              FullButton(text:'登录', onPressed: this._onLogin,)
+              ],
             ),
-            FullButton(text:'登录', onPressed: this._onLogin,)
-            ],
           ),
         ),
       ),
@@ -83,9 +88,14 @@ class _LoginState extends State<Login> {
   void _onLogin() async{
     // 提交前，先验证各个表单字段是否合法
     if ((_formKey.currentState as FormState).validate()) {
+      setState(() {
+        this._loading = true;
+      });
       Response response = await Dio().post( '${Global.API_BASE_PATH}common/login',
           data: {'username': _usernameController.text, 'password': _pwdController.text});
-
+      setState(() {
+        this._loading = false;
+      });
       if(response.data['statusCode'] == 401) {
         _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(response.data['msg'])));
         return;
