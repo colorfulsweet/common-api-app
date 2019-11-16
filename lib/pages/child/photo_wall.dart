@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
+import 'package:blog_api/common/base_state.dart';
 import 'package:blog_api/common/profile_notifier.dart';
 import 'package:blog_api/common/global.dart';
 
@@ -16,20 +17,18 @@ class PhotoWall extends StatefulWidget {
 }
 
 
-class _PhotoWallState extends State<PhotoWall> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+class _PhotoWallState extends BaseState<PhotoWall> {
   final Dio _http = Dio();
   // 滚动控制器
   ScrollController _scrollController = ScrollController();
   List<String> imgUrls = [];
   int _start = 0;
   int _limit = 20;
-  bool _isLoading = false; // 是否正在加载
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key: super.scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
         actions: <Widget>[
@@ -42,7 +41,7 @@ class _PhotoWallState extends State<PhotoWall> {
         ],
       ),
       body: ModalProgressHUD(
-        inAsyncCall: this._isLoading,
+        inAsyncCall: super.loading,
         child: RefreshIndicator(
           onRefresh: _refreshImagesData,
           child: StaggeredGridView.countBuilder(
@@ -75,6 +74,8 @@ class _PhotoWallState extends State<PhotoWall> {
       }
     });
   }
+
+
   /// 下拉时刷新数据
   Future<void> _refreshImagesData () async {
     return this._loadImagesData(false, (List<String> thumbnails){
@@ -89,15 +90,13 @@ class _PhotoWallState extends State<PhotoWall> {
   }
 
   Future<void> _loadImagesData(bool isAdd, Function callback) async {
-    if(this._isLoading) return null;
+    if(super.loading) return null;
     if(isAdd) {
       this._start += this._limit;
     } else {
       this._start = 0;
     }
-    setState(() {
-      this._isLoading = true;
-    });
+    super.loading = true;
     return _http.get('${Global.API_BASE_PATH}common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
         .then((Response response) {
       List<String> thumbnails = [];
@@ -106,7 +105,7 @@ class _PhotoWallState extends State<PhotoWall> {
       });
       // 动态改变数据需要调用setState
       setState((){
-        this._isLoading = false;
+        super.loading = false;
         callback(thumbnails);
       });
     });

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
+import 'package:blog_api/common/base_state.dart';
 import 'package:blog_api/common/global.dart';
 import 'package:blog_api/models/index.dart';
 import 'package:blog_api/common/profile_notifier.dart';
@@ -16,27 +17,23 @@ class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginState extends BaseState<Login> {
   /// 表单的唯一标识
-  final GlobalKey _formKey = GlobalKey<FormState>();
-  /// Scaffold组件的唯一标识
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController _usernameController = new TextEditingController();
   TextEditingController _pwdController = new TextEditingController();
   /// 是否显示密码明文
   bool _pwdShow = false;
-  /// 是否正在加载
-  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key: super.scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
       ),
       body: ModalProgressHUD(
-        inAsyncCall: _loading,
+        inAsyncCall: super.loading,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -87,17 +84,13 @@ class _LoginState extends State<Login> {
   }
   void _onLogin() async{
     // 提交前，先验证各个表单字段是否合法
-    if ((_formKey.currentState as FormState).validate()) {
-      setState(() {
-        this._loading = true;
-      });
+    if (_formKey.currentState.validate()) {
+      this.loading = true;
       Response response = await Dio().post( '${Global.API_BASE_PATH}common/login',
           data: {'username': _usernameController.text, 'password': _pwdController.text});
-      setState(() {
-        this._loading = false;
-      });
+      this.loading = false;
       if(response.data['statusCode'] == 401) {
-        _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(response.data['msg'])));
+        super.scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(response.data['msg'])));
         return;
       }
       // 保存token

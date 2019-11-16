@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:blog_api/common/base_state.dart';
 import 'package:blog_api/common/profile_notifier.dart';
 import 'package:blog_api/components/full_button.dart';
 import 'package:blog_api/common/global.dart';
@@ -13,9 +14,8 @@ class Home extends StatefulWidget {
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final List<Map<String, dynamic>> menus = [
+class _HomeState extends BaseState<Home> {
+  final List<Map<String, dynamic>> _menus = [
     {'icon': Icons.photo_library, 'text': '照片墙', 'routeName': 'photoWall'},
     {'icon': Icons.query_builder, 'text': '其他'},
     {'icon': Icons.query_builder, 'text': '其他'},
@@ -28,7 +28,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      key: _scaffoldKey,
+      key: super.scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
         automaticallyImplyLeading: false, // 不显示返回按钮
@@ -58,19 +58,19 @@ class _HomeState extends State<Home> {
                 child:Ink(
                   color: Theme.of(context).cardColor,
                   child:InkWell(
-                    onTap: () => Navigator.pushNamed(context, this.menus[index]['routeName']),
+                    onTap: () => Navigator.pushNamed(context, this._menus[index]['routeName']),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(this.menus[index]['icon'], size: 50),
-                        Text(this.menus[index]['text'], style: TextStyle(fontSize: 20),) //query_builder
+                        Icon(this._menus[index]['icon'], size: 50),
+                        Text(this._menus[index]['text'], style: TextStyle(fontSize: 20),) //query_builder
                       ],
                     ),
                   ),
                 ),
               );
             },
-            itemCount: this.menus.length,
+            itemCount: this._menus.length,
           ),
           FullButton(
             text: '退出登录',
