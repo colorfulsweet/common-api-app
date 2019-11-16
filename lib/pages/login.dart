@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import 'package:blog_api/common/base_state.dart';
@@ -86,7 +85,7 @@ class _LoginState extends BaseState<Login> {
     // 提交前，先验证各个表单字段是否合法
     if (_formKey.currentState.validate()) {
       this.loading = true;
-      Response response = await Dio().post( '${Global.API_BASE_PATH}common/login',
+      var response = await super.http.post( 'common/login',
           data: {'username': _usernameController.text, 'password': _pwdController.text});
       this.loading = false;
       if(response.data['statusCode'] == 401) {

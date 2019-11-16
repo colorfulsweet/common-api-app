@@ -17,7 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends BaseState<Home> {
   final List<Map<String, dynamic>> _menus = [
     {'icon': Icons.photo_library, 'text': '照片墙', 'routeName': 'photoWall'},
-    {'icon': Icons.query_builder, 'text': '其他'},
+    {'icon': Icons.chat, 'text': '一言', 'routeName': 'oneChat'},
     {'icon': Icons.query_builder, 'text': '其他'},
     {'icon': Icons.query_builder, 'text': '其他'},
     {'icon': Icons.query_builder, 'text': '其他'},
@@ -62,7 +62,7 @@ class _HomeState extends BaseState<Home> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(this._menus[index]['icon'], size: 50),
+                        Icon(this._menus[index]['icon'], size: 45),
                         Text(this._menus[index]['text'], style: TextStyle(fontSize: 20),) //query_builder
                       ],
                     ),

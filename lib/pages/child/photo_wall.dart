@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:photo_view/photo_view.dart';
 
 import 'package:blog_api/common/base_state.dart';
 import 'package:blog_api/common/profile_notifier.dart';
-import 'package:blog_api/common/global.dart';
 
 /// 照片墙
 class PhotoWall extends StatefulWidget {
@@ -18,15 +17,16 @@ class PhotoWall extends StatefulWidget {
 
 
 class _PhotoWallState extends BaseState<PhotoWall> {
-  final Dio _http = Dio();
   // 滚动控制器
   ScrollController _scrollController = ScrollController();
-  List<String> imgUrls = [];
+  List<dynamic> _imgData = [];
   int _start = 0;
   int _limit = 20;
 
   @override
   Widget build(BuildContext context) {
+    // 获取屏幕的尺寸
+    final Size screenSize = MediaQuery.of(context).size;
     return Scaffold(
       key: super.scaffoldKey,
       appBar: AppBar(
@@ -46,16 +46,34 @@ class _PhotoWallState extends BaseState<PhotoWall> {
           onRefresh: _refreshImagesData,
           child: StaggeredGridView.countBuilder(
             controller: _scrollController,
-            itemCount: this.imgUrls.length,
+            itemCount: this._imgData.length,
             primary: false,
             crossAxisCount: 4,
-            mainAxisSpacing: 4.0,
-            crossAxisSpacing: 4.0,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
             padding: EdgeInsets.all(10),
-            itemBuilder: (context, index) => Container(
-              child: Image.network(
-                this.imgUrls[index], // 图片地址
-                fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
+            itemBuilder: (staggeredGridViewContext, index) => Container(
+              height: (screenSize.width - 30) / 2 / this._imgData[index]['width'] * this._imgData[index]['height'],
+              decoration: BoxDecoration(
+                color: Theme.of(context).canvasColor,
+                boxShadow: [BoxShadow(color:Colors.black54, blurRadius: 6, spreadRadius: 1, offset:Offset(-2,-2))]
+              ),
+              child: GestureDetector(
+                onTap: (){
+                  showDialog(
+                    context: staggeredGridViewContext,
+                    builder: (dialogContext) => PhotoView(
+                      onTapUp: (BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue){
+                        Navigator.of(dialogContext).pop();
+                      },
+                      imageProvider: NetworkImage('https://cdn.colorfulsweet.site/' + this._imgData[index]['name']),
+                    )
+                  );
+                },
+                child: Image.network(
+                  'https://cdn.colorfulsweet.site/' + this._imgData[index]['thumbnail'], // 图片缩略图地址
+                  fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
+                ),
               ),
             ),
             staggeredTileBuilder: (index) => StaggeredTile.fit(2),
@@ -77,15 +95,15 @@ class _PhotoWallState extends BaseState<PhotoWall> {
 
 
   /// 下拉时刷新数据
-  Future<void> _refreshImagesData () async {
-    return this._loadImagesData(false, (List<String> thumbnails){
-      this.imgUrls = thumbnails;
+  Future<void> _refreshImagesData() async {
+    return this._loadImagesData(false, (List<dynamic> imgData){
+      this._imgData = imgData;
     });
   }
   /// 滑动到底部时加载更多数据
   Future<void> _moreImagesData() {
-    return this._loadImagesData(true, (List<String> thumbnails){
-      this.imgUrls.addAll(thumbnails);
+    return this._loadImagesData(true, (List<dynamic> imgData){
+      this._imgData.addAll(imgData);
     });
   }
 
@@ -97,16 +115,12 @@ class _PhotoWallState extends BaseState<PhotoWall> {
       this._start = 0;
     }
     super.loading = true;
-    return _http.get('${Global.API_BASE_PATH}common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
-        .then((Response response) {
-      List<String> thumbnails = [];
-      response.data['data'].forEach((item) {
-        thumbnails.add('https://cdn.colorfulsweet.site/' + item['thumbnail']);
-      });
+    return super.http.get('common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
+        .then((response) {
+      super.loading = false;
       // 动态改变数据需要调用setState
       setState((){
-        super.loading = false;
-        callback(thumbnails);
+        callback(response.data['data']);
       });
     });
   }
