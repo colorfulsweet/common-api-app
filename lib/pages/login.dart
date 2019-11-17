@@ -51,7 +51,8 @@ class _LoginState extends BaseState<Login> {
                 // 校验用户名（不能为空）
                 validator: (v) {
                   return v.trim().isNotEmpty ? null : '必须输入用户名';
-              }),
+                }
+              ),
               TextFormField(
                 controller: _pwdController,
                 autofocus: false,

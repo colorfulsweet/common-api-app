@@ -31,15 +31,17 @@ class _OneChatState extends BaseState<OneChat> {
         ),
         // 浮动按钮
         floatingActionButton: FloatingActionButton(
-          onPressed: (){ // 点击事件, 打开浮动框
-            showDialog(
+          onPressed: (){ // 点击事件, 打开底部升起的浮动框
+            showModalBottomSheet(
               context: context,
-              builder: (dialogContext) => _OneChatFrom(dialogContext)
+              builder: (bottomSheetContext) => _OneChatFrom({}),
+//              isScrollControlled: true,
             );
           },
           tooltip: '添加一言',
           child: Icon(Icons.add), // 子元素是一个图标
         ),
+//        bottomSheet: _OneChatFrom(),
       ),
     );
   }
@@ -47,31 +49,51 @@ class _OneChatState extends BaseState<OneChat> {
 
 /// 添加一言 表单
 class _OneChatFrom extends StatelessWidget {
-  final BuildContext dialogContext;
+  final Map<String, String> fromData;
 
-  _OneChatFrom(this.dialogContext);
+  _OneChatFrom(this.fromData);
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('添加一言'),
-      content: Text('这里应该是个表单'),
-      actions: <Widget>[
-        FlatButton(
-          child: Text('保存'),
-          onPressed: () {
-            // TODO 保存一言
-            Navigator.of(dialogContext).pop();
-          },
-        ),
-        FlatButton(
-          child: Text('取消'),
-          textColor: Theme.of(context).hintColor,
-          onPressed: () {
-            Navigator.of(dialogContext).pop();
-          },
-        ),
-      ],
-    );;
+    return Form(
+      child: Column(
+        children: <Widget>[
+          TextFormField(
+            initialValue: fromData['hitokoto'],
+            decoration: InputDecoration(
+              labelText: '内容',
+            ),
+            maxLines: 2, // 可折行
+            validator: (v) {
+              return v.trim().isNotEmpty ? null : '必须输入内容';
+            },
+            onChanged: (value) {
+              this.fromData['hitokoto'] = value;
+            },
+          ),
+          ButtonBar(
+            children: <Widget>[
+              FlatButton(
+                child: Text('保存'),
+                textColor: Theme.of(context).primaryColor,
+                onPressed: () {
+                  // TODO 保存一言
+                  print(this.fromData);
+                  Navigator.of(context).pop();
+                },
+              ),
+              FlatButton(
+                child: Text('取消'),
+                textColor: Theme.of(context).hintColor,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        ],
+      )
+    );
   }
+
 }
