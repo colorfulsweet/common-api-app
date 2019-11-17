@@ -19,9 +19,10 @@ class PhotoWall extends StatefulWidget {
 class _PhotoWallState extends BaseState<PhotoWall> {
   // 滚动控制器
   ScrollController _scrollController = ScrollController();
+  String _pictureCdn;
   List<dynamic> _imgData = [];
   int _start = 0;
-  int _limit = 20;
+  final int _limit = 20;
 
   @override
   Widget build(BuildContext context) {
@@ -44,47 +45,52 @@ class _PhotoWallState extends BaseState<PhotoWall> {
         inAsyncCall: super.loading,
         child: RefreshIndicator(
           onRefresh: _refreshImagesData,
-          child: StaggeredGridView.countBuilder(
-            controller: _scrollController,
-            itemCount: this._imgData.length,
-            primary: false,
-            crossAxisCount: 4,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            padding: EdgeInsets.all(10),
-            itemBuilder: (staggeredGridViewContext, index) => Container(
-              height: (screenSize.width - 30) / 2 / this._imgData[index]['width'] * this._imgData[index]['height'],
-              decoration: BoxDecoration(
-                color: Theme.of(context).canvasColor,
-                boxShadow: [BoxShadow(color:Colors.black54, blurRadius: 6, spreadRadius: 1, offset:Offset(-2,-2))]
-              ),
-              child: GestureDetector(
-                onTap: (){
-                  showDialog(
-                    context: staggeredGridViewContext,
-                    builder: (dialogContext) => PhotoView(
-                      onTapUp: (BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue){
-                        Navigator.of(dialogContext).pop();
-                      },
-                      imageProvider: NetworkImage('https://cdn.colorfulsweet.site/' + this._imgData[index]['name']),
-                    )
-                  );
+          child: buildStaggeredGridView(screenSize, context),
+        ),
+      ),
+    );
+  }
+  /// 构建瀑布流布局
+  StaggeredGridView buildStaggeredGridView(Size screenSize, BuildContext context) {
+    return StaggeredGridView.countBuilder(
+      controller: _scrollController,
+      itemCount: this._imgData.length,
+      primary: false,
+      crossAxisCount: 4,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      padding: EdgeInsets.all(10),
+      itemBuilder: (staggeredGridViewContext, index) => Container(
+        height: (screenSize.width - 30) / 2 / this._imgData[index]['width'] * this._imgData[index]['height'],
+        decoration: BoxDecoration(
+          color: Theme.of(context).canvasColor,
+          boxShadow: [BoxShadow(color:Colors.black54, blurRadius: 6, spreadRadius: 1, offset:Offset(-2,-2))]
+        ),
+        child: GestureDetector(
+          onTap: (){
+            showDialog(
+              context: staggeredGridViewContext,
+              builder: (dialogContext) => PhotoView(
+                onTapUp: (BuildContext context, TapUpDetails details, PhotoViewControllerValue controllerValue){
+                  Navigator.of(dialogContext).pop();
                 },
-                child: Image.network(
-                  'https://cdn.colorfulsweet.site/' + this._imgData[index]['thumbnail'], // 图片缩略图地址
-                  fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
-                ),
-              ),
-            ),
-            staggeredTileBuilder: (index) => StaggeredTile.fit(2),
+                imageProvider: NetworkImage(this._pictureCdn + this._imgData[index]['name']),
+              )
+            );
+          },
+          child: Image.network(
+            this._pictureCdn + this._imgData[index]['thumbnail'], // 图片缩略图地址
+            fit: BoxFit.fitWidth, // fit属性指定控制图片拉伸适应容器的方式, 这里是占满宽度, 高度成比例缩放
           ),
         ),
       ),
+      staggeredTileBuilder: (index) => StaggeredTile.fit(2),
     );
   }
   @override
   void initState() {
     super.initState();
+    this._pictureCdn = this._getPictureCdn().toString();
     this._refreshImagesData();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
@@ -93,9 +99,14 @@ class _PhotoWallState extends BaseState<PhotoWall> {
     });
   }
 
+  dynamic _getPictureCdn() async {
+    super.loading = true;
+    var response = await super.http.get('common/config/picture_cdn');
+    return response.data;
+  }
 
   /// 下拉时刷新数据
-  Future<void> _refreshImagesData() async {
+  Future<void> _refreshImagesData() {
     return this._loadImagesData(false, (List<dynamic> imgData){
       this._imgData = imgData;
     });
@@ -107,14 +118,14 @@ class _PhotoWallState extends BaseState<PhotoWall> {
     });
   }
 
-  Future<void> _loadImagesData(bool isAdd, Function callback) async {
+  Future<void> _loadImagesData(bool isAdd, Function callback) {
     if(super.loading) return null;
     if(isAdd) {
+      super.loading = true;
       this._start += this._limit;
     } else {
       this._start = 0;
     }
-    super.loading = true;
     return super.http.get('common/photos', queryParameters: {'start': this._start, 'limit': this._limit})
         .then((response) {
       super.loading = false;
