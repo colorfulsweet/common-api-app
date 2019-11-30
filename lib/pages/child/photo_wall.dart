@@ -92,7 +92,7 @@ class _PhotoWallState extends BaseState<PhotoWall> {
     super.initState();
     this._pictureCdn = this._getPictureCdn().toString();
     this._refreshImagesData();
-    _scrollController.addListener(() {
+    this._scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         this._moreImagesData();
       }

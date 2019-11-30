@@ -13,6 +13,12 @@ class OneChat extends StatefulWidget {
 }
 
 class _OneChatState extends BaseState<OneChat> {
+  // 滚动控制器
+  ScrollController _scrollController = ScrollController();
+  List<dynamic> _oneChatData = [];
+  int _pageNum = 1; // 当前页码
+  final int _limit = 20; // 每页数据条数
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -29,21 +35,61 @@ class _OneChatState extends BaseState<OneChat> {
           ),
           ],
         ),
+        body: ListView.builder(
+          controller: this._scrollController,
+          itemCount: this._oneChatData.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(this._oneChatData[index]['hitokoto']),
+              subtitle: Text(
+                '——${this._oneChatData[index]['from']}',
+                textAlign: TextAlign.right,
+              ),
+            );
+          }
+        ),
         // 浮动按钮
         floatingActionButton: FloatingActionButton(
           onPressed: (){ // 点击事件, 打开底部升起的浮动框
             showModalBottomSheet(
               context: context,
               builder: (bottomSheetContext) => _OneChatFrom({}),
-//              isScrollControlled: true,
+              isScrollControlled: true,
             );
           },
           tooltip: '添加一言',
           child: Icon(Icons.add), // 子元素是一个图标
         ),
-//        bottomSheet: _OneChatFrom(),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    this._loadOneChatData(false);
+    this._scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        this._loadOneChatData(true);
+      }
+    });
+  }
+  /// 加载一言数据
+  void _loadOneChatData(bool isAdd) async {
+    if(super.loading)
+      return null;
+    if(isAdd)
+      this._pageNum += this._limit;
+    super.loading = true;
+    var response = await super.http.get('hitokoto/list', queryParameters: {'pageNum': this._pageNum, 'limit': this._limit});
+    super.loading = false;
+    setState(() {
+      if(isAdd) {
+        this._oneChatData.addAll(response.data['data']);
+      } else {
+        this._oneChatData = response.data['data'];
+      }
+    });
   }
 }
 
